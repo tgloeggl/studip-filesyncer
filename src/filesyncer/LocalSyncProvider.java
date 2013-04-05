@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -36,7 +37,7 @@ public class LocalSyncProvider implements SyncerResource {
 
     @Override
     public SyncerFile findByPath(String path) throws FileNotFoundException {
-        File file = new File(path);
+        File file = new File(this.path + path);
         if (file.exists()) {
             return new LocalSyncFile(file);
         } 
@@ -45,7 +46,7 @@ public class LocalSyncProvider implements SyncerResource {
     }
 
     @Override
-    public void putFile(SyncerFile file) {
+    public void putFile(SyncerFile file, Date timestamp) {
         // trim leading slash if present
         String remote_file_path = file.getPath();
         if (remote_file_path.startsWith("/")) {
@@ -73,6 +74,11 @@ public class LocalSyncProvider implements SyncerResource {
             while ((len = is.read(buffer)) != -1) {
                out.write(buffer, 0, len);
             }
+            
+            out.close();
+            is.close();
+            
+            local_file.setLastModified(timestamp.getTime());
         } catch (IOException ex) {
             System.out.println("[ERROR]" + ex.getMessage());
             // Logger.getLogger(LocalSyncProvider.class.getName()).log(Level.SEVERE, null, ex);

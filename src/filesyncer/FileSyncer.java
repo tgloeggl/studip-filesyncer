@@ -6,12 +6,38 @@ package filesyncer;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  *
  * @author Till Glöggler <tgloeggl@uos.de>
  */
 public class FileSyncer {
+
+    public FileSyncer() {
+        // Initial WebDAV configuration
+        WebDAVSyncConfig webdav_config = new WebDAVSyncConfig();
+        
+        HashMap config = new HashMap<String, String>();
+        config.put("base_path", "");
+        config.put("dav_path", "");
+        config.put("username", "");
+        config.put("password", "");
+        
+        webdav_config.setConfig(config);
+        
+        // Initial Filesystem configuration
+        LocalSyncConfig local_config = new LocalSyncConfig();
+        
+        HashMap config2 = new HashMap<String, String>();
+        config2.put("local_path", "");
+        
+        local_config.setConfig(config2);
+        
+        SyncerPipeline pipeline = new SyncerPipeline(webdav_config, local_config);
+        Config.addPipeline(pipeline);
+    }
 
     static class ShowMessageListener implements ActionListener {
 
@@ -32,71 +58,83 @@ public class FileSyncer {
         }
     }
     
-   
+    private void run() {
+        if (SystemTray.isSupported()) {
+            final SystemTray tray = SystemTray.getSystemTray();
+            Image image = Toolkit.getDefaultToolkit().getImage("reload.png");
+            PopupMenu popup = new PopupMenu();
+
+            final TrayIcon trayIcon = new TrayIcon(image, "FileSyncer Version 0.0.1", popup);
+            trayIcon.setImageAutoSize(true);
+
+            // Für jede Pipeline einen eigenen Eintrag
+            
+            ArrayList pipelines = Config.getPipelines();
+            for (Object obj : pipelines) {
+                final SyncerPipeline pl = (SyncerPipeline)obj;
+
+                MenuItem entry = new MenuItem("WebDAV syncen");
+                entry.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                        System.out.println("[SYNC INITIATED] Starting sync, configuration details follow");
+                        System.out.println(pl.getConfigFrom().getConfig());
+                        System.out.println(pl.getConfigTo().getConfig());
+
+                        System.out.println("*** >>> SYNCING FILES ***");
+                        Syncer syncer = new Syncer(pl.getConfigFrom().getSyncProvider(), pl.getConfigTo().getSyncProvider());
+                        syncer.sync();
+
+                        System.out.println("*** <<< SYNCING FILES ***");
+                    }
+                });
+                popup.add(entry);
+            }
+
+
+            // add close menu-item
+            MenuItem config_item = new MenuItem("Konfiguration");
+            config_item.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    // new MainFrame().setVisible(true);
+
+                    java.awt.EventQueue.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            new MainFrame().setVisible(true);
+                        }
+                    });
+                }
+            });
+            popup.add(config_item);
+
+            // add close menu-item
+            MenuItem item = new MenuItem("Close");
+            item.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    tray.remove(trayIcon);
+                }
+            });
+            popup.add(item);
+
+            // add tray icon
+            try {
+                tray.add(trayIcon);
+            } catch (AWTException e) {
+                System.err.println("Can't add to tray");
+            }
+        } else {
+            System.err.println("Tray unavailable");
+        }
+    }
+    
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        final FileSyncer f = new FileSyncer();
         Runnable runner = new Runnable() {
             public void run() {
-                if (SystemTray.isSupported()) {
-                    final SystemTray tray = SystemTray.getSystemTray();
-                    Image image = Toolkit.getDefaultToolkit().getImage("reload.png");
-                    PopupMenu popup = new PopupMenu();
-                    
-                    final TrayIcon trayIcon = new TrayIcon(image, "FileSyncer Version 0.0.1", popup);
-                    trayIcon.setImageAutoSize(true);
-
-                    // Einstellungen
-                    MenuItem settings = new MenuItem("WebDAV syncen");
-                    settings.addActionListener(new ActionListener() {
-                        public void actionPerformed(ActionEvent e) {
-                            System.out.println("Starting syncer...");
-
-                            String base_path = "url_to_webdav_server";
-                            String dav_path   = "path_to_dav_resource";
-                            
-                            WebDAVSyncProvider webdav = new WebDAVSyncProvider(base_path, dav_path, "username", "password");
-                            
-                            /*
-                            System.out.println("*** >>> RECEIVED FILES FROM SERVER ***");
-                            for (SyncerFile f: webdav.getFiles()) {
-                                System.out.println(f.getPath());
-                            }
-                            
-                            System.out.println("*** <<< RECEIVED FILES FROM SERVER ***");
-                            */
-                            
-                            
-                            System.out.println("*** >>> SYNCING FILES ***");
-                            Syncer syncer = new Syncer(new LocalSyncProvider("path_to_local_directory"), webdav);
-                            syncer.sync();
-                            
-                            System.out.println("*** <<< SYNCING FILES ***");
-                            
-                        }
-                    });
-                    popup.add(settings);
-
-                    
-                    // add close menu-item
-                    MenuItem item = new MenuItem("Close");
-                    item.addActionListener(new ActionListener() {
-                        public void actionPerformed(ActionEvent e) {
-                            tray.remove(trayIcon);
-                        }
-                    });
-                    popup.add(item);
-                    
-                    // add tray icon
-                    try {
-                        tray.add(trayIcon);
-                    } catch (AWTException e) {
-                        System.err.println("Can't add to tray");
-                    }
-                } else {
-                    System.err.println("Tray unavailable");
-                }
+                f.run();
             }
         };
         EventQueue.invokeLater(runner);

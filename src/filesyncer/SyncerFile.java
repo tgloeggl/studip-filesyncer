@@ -17,5 +17,6 @@ public interface SyncerFile {
     public String getMD5();
     public String getPath();
     public Date getTimestamp();
+    public long getLength();
     public InputStream getStream() throws MalformedURLException, IOException;
 }

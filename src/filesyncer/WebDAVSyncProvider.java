@@ -7,18 +7,16 @@ package filesyncer;
 import com.googlecode.sardine.DavResource;
 import com.googlecode.sardine.Sardine;
 import com.googlecode.sardine.SardineFactory;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -77,7 +75,7 @@ public class WebDAVSyncProvider implements SyncerResource {
         String path = "";
 
         path = this.parseUrl(this.base_path + dav_path).toString();
-
+        
         List<SyncerFile> files = new ArrayList<SyncerFile>();
 
         Sardine sardine = SardineFactory.begin();
@@ -99,9 +97,10 @@ public class WebDAVSyncProvider implements SyncerResource {
                     if (!res.isDirectory()) {
                         System.out.println("[INFO] File found: " + path + res.getName());
                         try {
-                            files.add(new WebDAVSyncFile(res, sardine.get(this.parseUrl(path + res.getName()))));
+                            files.add(new WebDAVSyncFile(res, path + URLEncoder.encode(res.getName(), "UTF-8"), this.username, this.password));
                         } catch (IOException ioe) {
-                            System.out.println("[ERROR] " + ioe.getMessage());
+                            System.out.println(ioe.toString());
+                            System.out.println("[ERROR ##2] " + ioe.getMessage());
                         }
                     } else {
                         files.addAll(this.getFilesRecursive(res.toString()));
@@ -109,7 +108,8 @@ public class WebDAVSyncProvider implements SyncerResource {
                 }
             } 
         } catch (IOException e) {
-            System.out.println("[ERROR] " + e.getMessage());
+            System.out.println(e.toString());
+            System.out.println("[ERROR ##1] " + e.getMessage());
         }
 
         return files;        
@@ -121,7 +121,8 @@ public class WebDAVSyncProvider implements SyncerResource {
     }
 
     @Override
-    public void putFile(SyncerFile file) {
+    public void putFile(SyncerFile file, Date timestamp) {
+        
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

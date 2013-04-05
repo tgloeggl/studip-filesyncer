@@ -5,6 +5,7 @@
 package filesyncer;
 
 import java.io.FileNotFoundException;
+import java.util.Date;
 
 /**
  *
@@ -13,6 +14,6 @@ import java.io.FileNotFoundException;
 public interface SyncerResource {
     public java.util.List<SyncerFile> getFiles();
     public SyncerFile findByPath(String path) throws FileNotFoundException;
-    public void putFile(SyncerFile file);
+    public void putFile(SyncerFile file, Date timestamp);
     public boolean canWrite();
 }

@@ -5,6 +5,7 @@
 package filesyncer;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,7 +26,7 @@ public class LocalSyncFile implements SyncerFile {
 
     @Override
     public String getMD5() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return SyncerHelpers.calculateMd5(this.file);
     }
 
     @Override
@@ -40,7 +41,12 @@ public class LocalSyncFile implements SyncerFile {
 
     @Override
     public InputStream getStream() throws MalformedURLException, IOException {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return (InputStream) new FileInputStream(this.file);
+    }
+
+    @Override
+    public long getLength() {
+        return file.length();
     }
     
 }
