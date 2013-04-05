@@ -4,13 +4,14 @@
  */
 package filesyncer;
 
+import java.io.Serializable;
 import java.util.HashMap;
 
 /**
  *
  * @author Till Glöggler <tgloeggl@uos.de>
  */
-public class WebDAVSyncConfig implements SyncerConfig {
+public class WebDAVSyncConfig implements SyncerConfig, Serializable {
     private HashMap<String, String> config;
     
     @Override

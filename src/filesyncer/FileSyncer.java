@@ -7,6 +7,7 @@ package filesyncer;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.io.File;
 import java.util.HashMap;
 
 /**
@@ -16,27 +17,34 @@ import java.util.HashMap;
 public class FileSyncer {
 
     public FileSyncer() {
-        // Initial WebDAV configuration
-        WebDAVSyncConfig webdav_config = new WebDAVSyncConfig();
-        
-        HashMap config = new HashMap<String, String>();
-        config.put("base_path", "");
-        config.put("dav_path", "");
-        config.put("username", "");
-        config.put("password", "");
-        
-        webdav_config.setConfig(config);
-        
-        // Initial Filesystem configuration
-        LocalSyncConfig local_config = new LocalSyncConfig();
-        
-        HashMap config2 = new HashMap<String, String>();
-        config2.put("local_path", "");
-        
-        local_config.setConfig(config2);
-        
-        SyncerPipeline pipeline = new SyncerPipeline(webdav_config, local_config);
-        Config.addPipeline(pipeline);
+        File f = new File(Config.config_filename);
+        if(f.exists()) {
+            Config.loadConfig();
+        } else {
+            // Initial WebDAV configuration
+            WebDAVSyncConfig webdav_config = new WebDAVSyncConfig();
+
+            HashMap config = new HashMap<String, String>();
+            config.put("base_path", "");
+            config.put("dav_path", "");
+            config.put("username", "");
+            config.put("password", "");
+
+            webdav_config.setConfig(config);
+
+            // Initial Filesystem configuration
+            LocalSyncConfig local_config = new LocalSyncConfig();
+
+            HashMap config2 = new HashMap<String, String>();
+            config2.put("local_path", "");
+
+            local_config.setConfig(config2);
+
+            SyncerPipeline pipeline = new SyncerPipeline(webdav_config, local_config);
+            Config.addPipeline(pipeline);
+
+            Config.storeConfig();
+        }
     }
 
     static class ShowMessageListener implements ActionListener {
@@ -73,7 +81,10 @@ public class FileSyncer {
             for (Object obj : pipelines) {
                 final SyncerPipeline pl = (SyncerPipeline)obj;
 
-                MenuItem entry = new MenuItem("WebDAV syncen");
+                String from = pl.getConfigFrom().getClass().toString().split("\\.")[1].replaceAll("SyncConfig", "");
+                String to   = pl.getConfigTo().getClass().toString().split("\\.")[1].replaceAll("SyncConfig", "");
+
+                MenuItem entry = new MenuItem(from + " -> " + to);
                 entry.addActionListener(new ActionListener() {
                     public void actionPerformed(ActionEvent e) {
                         System.out.println("[SYNC INITIATED] Starting sync, configuration details follow");

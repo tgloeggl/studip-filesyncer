@@ -4,13 +4,13 @@
  */
 package filesyncer;
 
-import java.util.HashMap;
+import java.io.Serializable;
 
 /**
  *
  * @author Till Glöggler <tgloeggl@uos.de>
  */
-public class SyncerPipeline {
+public class SyncerPipeline implements Serializable {
     private SyncerConfig configFrom;
     private SyncerConfig configTo;
      
